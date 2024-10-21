@@ -4,6 +4,9 @@ import os
 import re
 from sympy import symbols, expand, integrate, diff, solve
 
+# type checks for parser
+from checks import *
+
 from segments import build_data_segment
 from segments import build_transformed_data_segment
 from segments import build_parameter_segment
@@ -11,39 +14,12 @@ from segments import build_transformed_parameter_segment
 from segments import build_model_segment
 from segments import build_generated_quantities_segment
 
-TEMPLATE_LOCATION = os.path.join(__file__,'templates')
+TEMPLATE_LOCATION = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    'templates'
+)
+
 BASE_TEMPLATE_FN = 'base_template.stan'
-
-def check_odd(x):
-    msg = 'Argument must be a postive, odd integer, not %s!'
-    if type(x) != type(1):
-        raise argparse.ArgumentTypeError(msg % x)
-    if x < 1 or x % 2 != 1:
-        raise argparse.ArgumentTypeError(msg % x)
-    return int(x)
-
-def check_whole(x):
-    msg = 'Argument must be a non-negative integer, not %s!'
-    if type(x) != type(1):
-        raise argparse.ArgumentTypeError(msg % x)
-    if x < 0:
-        raise argparse.ArgumentTypeError(msg % x)
-    return int(x)
-
-
-def check_kernel(x):
-    mstring = r'\(([0-9]+),([0-9]+(?:\.[0-9]+)?),([012])\)'
-    msg = 'Argument must be in format of (integer,real,one of {0,1,2}), not %s'
-    for elem in x:
-        if not re.match(mstring,elem):
-            raise argparse.ArgumentTypeError(msg % str(elem))
-    parsed = [
-        (int(e[0]),float(e[1]),int(e[2]))
-        for elem in x
-        for e in 
-        re.findall(mstring,elem)        
-    ]
-    return parsed
 
 def get_options():
     parser = argparse.ArgumentParser(
@@ -64,7 +40,20 @@ def get_options():
     parser.add_argument(
         '--degree',
         help='Degree of splines. Must be odd integer.',
-        type=check_odd
+        type=check_odd,
+        required=True
+    )
+
+    parser.add_argument(
+        '--estimate-phi',
+        action='store_true',
+        help='Estimate phi'
+    )
+
+    parser.add_argument(
+        '--phi',
+        type=check_real_under_1,
+        help='Initial estimate of phi. If this and --estimate-phi are not specified, time drift is not assumed.'
     )
 
     parser.add_argument(
@@ -72,7 +61,8 @@ def get_options():
         nargs='*',
         required=False,
         help='Derivatives of spline which will have penalty terms of their squared norms.',
-        type=check_whole
+        type=check_whole,
+        default=[1]
     )
 
     parser.add_argument(
@@ -90,7 +80,7 @@ def get_options():
 
     parser.add_argument(
         '-v','--verbose',
-        name='verbose',
+        dest='verbose',
         action='store_true',
         help='Print out extra detail during script'
     )
@@ -98,7 +88,7 @@ def get_options():
     parser.add_argument(
         '--kernel-opts',
         nargs='*',
-        help="Comma'd tuples in the form of (D,R,T), where D is spacing distance, R is rate of decay (, and T is type. T=0 is square (pyramid), T=1 is diamond (pyramid), T=2 is normal kernel",
+        help="Comma'd tuples in the form of (D,R,T), where D is spacing distance, R is rate of decay, and T is type. T=0 is square (pyramid), T=1 is diamond (pyramid), T=2 is normal kernel",
         type=check_kernel
     )
 
@@ -106,7 +96,14 @@ def get_options():
         '--existing-edges',
         nargs='*',
         choices=['T','B','L','R'],
-        help = 'Indicates which sides of the map will be provided as input. T=top (y=0), B=bottom, L=left (x=0) R=right. T^his creates a total of 2^4=16 different configurations for the model.'
+        help = 'Indicates which sides of the map will be provided as input. T=top (y=0), B=bottom, L=left (x=0) R=right. T^his creates a total of 2^4=16 different configurations for the model. Note that corners will overlap, but the top/bottom values are the ones that are used.'
+    )
+
+    parser.add_argument(
+        '--drift-sd',
+        type=check_sd,
+        default=0,
+        help='Drift standard deviation. If nonzero, will assume x-y drift in model'
     )
 
     args = parser.parse_args()
@@ -121,6 +118,11 @@ def get_options():
             pgrid = ['PG','CS%s' % options['sample_data_tile_radius']][1 - options['use_perfect_grid']]
         )
 
+    if options['use_perfect_grid'] and (options['drift_sd'] > 0 or options['use_phi']):
+        raise argparse.ArgumentTypeError(
+            'Cannot enable --use-perfect-grid and define `drift_sd` or enable --use-phi'
+        )
+
     # build logger and incorporate verbose arg
     
     # return
@@ -128,12 +130,12 @@ def get_options():
         
 
 def build_stan(options):
-    data_segment = build_data_segment()
-    transformed_data_segment = build_transformed_data_segment()
-    parameter_segment = build_parameter_segment()
-    transformed_parameter_segment = build_transformed_parameter_segment()
-    model_segment = build_model_segment()
-    generated_quantities_segment = build_generated_quantities_segment()
+    data_segment = build_data_segment(options)
+    transformed_data_segment = build_transformed_data_segment(options)
+    parameter_segment = build_parameter_segment(options)
+    transformed_parameter_segment = build_transformed_parameter_segment(options)
+    model_segment = build_model_segment(options)
+    generated_quantities_segment = build_generated_quantities_segment(options)
 
 
     with open(os.path.join(TEMPLATE_LOCATION,BASE_TEMPLATE_FN),'r') as f:
@@ -141,9 +143,9 @@ def build_stan(options):
 
     stan_file = base_template.format(
         data_template=data_segment,
-        transformed_data_template=transformed_data_template,
-        parameter_template=parameter_segment,
-        transformed_parameter_template=transformed_parameter_segment,
+        transformed_data_template=transformed_data_segment,
+        parameters_template=parameter_segment,
+        transformed_parameters_template=transformed_parameter_segment,
         model_template=model_segment,
         generated_quantities_template=generated_quantities_segment
     )
@@ -160,4 +162,4 @@ def build_stan(options):
 
 if __name__=='__main__':
     options = get_options()
-    build_file(options)
+    build_stan(options)
