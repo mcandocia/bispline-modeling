@@ -88,7 +88,7 @@ def get_options():
     parser.add_argument(
         '--kernel-opts',
         nargs='*',
-        help="Comma'd tuples in the form of (D,R,T), where D is spacing distance, R is rate of decay, and T is type. T=0 is square (pyramid), T=1 is diamond (pyramid), T=2 is normal kernel",
+        help="Comma'd tuples in the form of (D,R,T), where D is spacing distance, R is rate of decay, and T is type. T=0 is square (pyramid), T=1 is diamond (pyramid), T=2 is normal kernel. Can also be in form of (D,R,T,dflag,max_range,normal_sd) for more control.",
         type=check_kernel
     )
 

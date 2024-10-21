@@ -75,6 +75,10 @@ def degree_derivative_iter_sum(k, v=['y','x'],sep='',sep2=''):
 
 def extract_degree(x, v):
     return int(re.findall('%s([0-9]+)' % v, x)[0])
+
+# conversion of dictionaries to tuples used for kernel options
+def dict_to_kopts(x):
+    return {}
             
         
         

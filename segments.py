@@ -214,14 +214,70 @@ def build_transformed_data_segment(options):
         kernel_denominators=kernel_denominators,
     )
 
+PARAMETER_TEMPLATE = """
+// parameter grid w/necessary truncations for each derivative
+// if kernels used, rename this with `_raw` 
+
+
+//  if z-drift is being used, define the errors and the sigmas
+//  (also allow sigmas to be defined)
+
+//  if xy-drift is being used, define matrix of drifts
+//  sigma should be defined in `data` block, not here
+
+// future: define additional variates used in model
+
+"""
+
 def build_parameter_segment(options):
     return '[PLACEHOLDER]'
+
+TRANSFORMED_PARAMETER_TEMPLATE = """
+// append edges to parameters for each derivative (if applicable)
+
+// calculate kernel contributions (if applicable)
+
+// calculate sub-blocks for each derivative {{00,01,10,11}}
+
+// calculate a-values for spline
+
+// calculate squared derivatives used for penalties
+
+// if z-drift is being used, define cumulative error with time drift component
+
+// if xy-drift is being used, calcualte probabilities of transitions
+
+// calculate the estimates for each point
+// if xy-drift is allowed, first determine the cell 
+// future: include effects of variates in the model
+
+// calculate overall penalty
+
+"""
 
 def build_transformed_parameter_segment(options):
     return '[PLACEHOLDER]'
 
+MODEL_TEMPLATE = """
+// to help stabilize parameters
+// will not be particularly strong
+{kernel_priors}
+{derivative_priors}
+
+target+=-penalty;
+
+"""
+
 def build_model_segment(options):
     return '[PLACEHOLDER]'
+
+
+GENERATED_QUANTITIES_TEMPLATE = """
+// z-drift estimate (if applicable)
+
+// granular maps for each set of derivatives
+
+"""
 
 def build_generated_quantities_segment(options):
     return '[PLACEHOLDER]'
