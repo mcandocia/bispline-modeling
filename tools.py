@@ -4,6 +4,23 @@ import re
 
 TOOLS_DEBUG=False
 
+def clear_empty(x):
+    return [
+        e for e in x
+        if e
+    ]
+
+def clear_leading_newline_spaces(x):
+    return re.sub(
+        r'^[ \t +]',
+        '',
+        x,
+        flags=re.M
+    )
+
+# alias
+clns = clear_leading_newline_spaces
+
 def print_fl(x,margin=10,**kwargs):
     if len(x) <= 2*margin:
         print(x,**kwargs)
