@@ -246,12 +246,18 @@ def build_parameter_segment(options):
     degree = options['degree']
     # determine # of top and bottom portions of grid that are sliced off
     if options['existing_edges'] or options['kernel_opts']:
-        top = 'T' in options['existing_edges']
-        bot = 'B' in options['existing_edges']
-        left = 'L' in options['existing_edges']
-        right = 'R' in options['existing_edges']
+        if options['existing_edges']:
+            top = 'T' in options['existing_edges']
+            bot = 'B' in options['existing_edges']
+            left = 'L' in options['existing_edges']
+            right = 'R' in options['existing_edges']
+        else:
+            top = False
+            bot = False
+            left = False
+            right = False
         n_vertical = top + bot
-        n_horizontal = left + right
+        n_horizontal = left + right            
         sfx = '_raw'
     else:
         n_vertical = 0
@@ -259,7 +265,7 @@ def build_parameter_segment(options):
         sfx = ''
 
     required_derivative_names = degree_derivative_iter_max(degree // 2)
-
+    grid_definition_list = []
     for name in required_derivative_names:
         grid_definition_list.append(
             f'matrix[ydim-{n_vertical},xdim-{n_horizontal}] map{sfx}_{name};'
@@ -295,7 +301,7 @@ def build_parameter_segment(options):
 
     # xy-drift
     if options['drift_sd']:
-        xydrift_defintions = clns("""
+        xydrift_definitions = clns("""
         vector[N] xdrift;
         vector[N] ydrift;
         real xdrift0;
@@ -352,10 +358,17 @@ def build_transformed_parameter_segment(options):
     required_derivative_names = degree_derivative_iter_max(degree // 2)
     
     if options['existing_edges'] or options['kernel_opts']:
-        top = 'T' in options['existing_edges']
-        bot = 'B' in options['existing_edges']
-        left = 'L' in options['existing_edges']
-        right = 'R' in options['existing_edges']
+        if options['existing_edges']:
+            top = 'T' in options['existing_edges']
+            bot = 'B' in options['existing_edges']
+            left = 'L' in options['existing_edges']
+            right = 'R' in options['existing_edges']
+        else:
+            top = False
+            bot = False
+            left = False
+            right = False
+            
         n_vertical = top + bot
         n_horizontal = left + right
 
@@ -370,9 +383,9 @@ def build_transformed_parameter_segment(options):
             if top:
                 vname = f'edge_top_{name}'
                 top_append = clns(f"""
-                for (i in 1:xdim){
+                for (i in 1:xdim){{
                 {base_name}[1,i] = {vname}[i];
-                }
+                }}
                 """)
                 tb = '2'
                 lines.append(top_append)
@@ -381,9 +394,9 @@ def build_transformed_parameter_segment(options):
             if bot:
                 vname = f'edge_bot_{name}'
                 bot_append = clns(f"""
-                for (i in 1:xdim){
+                for (i in 1:xdim){{
                 {base_name}[ydim,i] = {vname}[i];
-                }
+                }}
                 """)
                 bb = 'ydim-1'
                 lines.append(bot_append)
@@ -392,9 +405,9 @@ def build_transformed_parameter_segment(options):
             if left:
                 vname = f'edge_left_{name}'
                 bot_append = clns(f"""
-                for (i in 1:ydim){
+                for (i in 1:ydim){{
                 {base_name}[i,1] = {vname}[i];
-                }
+                }}
                 """)
                 lines.append(left_append)
                 lb = '2'
@@ -404,9 +417,9 @@ def build_transformed_parameter_segment(options):
             if right:
                 vname = f'edge_right_{name}'
                 bot_append = clns(f"""
-                for (i in 1:ydim){
+                for (i in 1:ydim){{
                 {base_name}[i,xdim] = {vname}[i];
-                }
+                }}
                 """)
                 lines.append(right_append)
                 rb = 'xdim-1'
@@ -426,9 +439,15 @@ def build_transformed_parameter_segment(options):
     if options['kernel_opts']:
         lines = []
         for degree_prefix in required_derivative_names:
-            for i, opt in enumerate(kernel_opts):
+            for i, opt in enumerate(options['kernel_opts']):
                 varname = f'k{i}_{degree_prefix}'
-                lines.append(build_kernel_loop(opt,degree_prefix,varname,i)
+                lines.append(build_kernel_loop(
+                    opt,
+                    options,
+                    degree_prefix,
+                    varname,
+                    i
+                ))
         kernel_contributions = '\n'.join(lines)
             
     else:

@@ -1,3 +1,28 @@
+functions {
+  // these should be close enough
+  real sign(int x){
+     return x/(abs(x) + machine_precision());
+  }
+
+  real sign(real x){
+     return x/(abs(x) + machine_precision());
+  }
+
+  // for xy drift boundary-limiting
+  real exp_limit(real x, real l2){
+    return -l2 + 2 * l2 * 1./(1. + exp((x+l2)/(2*l2)));
+  };
+
+  vector exp_limit(vector x, real l2){
+    return -l2 + 2 * l2 * 1./(1. + exp((x+l2)/(2*l2)));
+  };
+
+  row_vector exp_limit(row_vector x, real l2){
+    return -l2 + 2 * l2 * 1./(1. + exp((x+l2)/(2*l2)));
+  };
+  
+}
+
 data {
 
 
@@ -55,11 +80,31 @@ transformed data {
 }
 
 parameters {
-[PLACEHOLDER]
+
+// parameter grid w/necessary truncations for each derivative
+// if kernels used, rename this with `_raw` 
+matrix[ydim-0,xdim-0] map_y0x0;
+matrix[ydim-0,xdim-0] map_y0x1;
+matrix[ydim-0,xdim-0] map_y1x1;
+
+// kernel matrices
+
+
+//  if z-drift is being used, define the errors and the sigmas
+//  (also allow sigmas to be defined)
+
+
+//  if xy-drift is being used, define matrix of drifts
+//  sigma should be defined in `data` block, not here
+
+
+// future: define additional variates used in model
+
+
 }
 
 transformed parameters {
-[PLACEHOLDER]
+None
 }
 
 model {

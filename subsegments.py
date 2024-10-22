@@ -196,16 +196,22 @@ klT2_template = """
 // TODO: develop later
 """
 
-def build_kernel_loop(opt,degree_prefix,varname,ki):
+def build_kernel_loop(opt,options,degree_prefix,varname,ki):
     kD, kR, kT, dflag, max_range, normal_sd = opt
     degree_x = extract_degree(degree_prefix,'x')
     degree_y = extract_degree(degree_prefix,'y')
     d = degree_x + degree_y
 
-    top = 'T' in options['existing_edges']
-    bot = 'B' in options['existing_edges']
-    left = 'L' in options['existing_edges']
-    right = 'R' in options['existing_edges']
+    if options['existing_edges']:
+        top = 'T' in options['existing_edges']
+        bot = 'B' in options['existing_edges']
+        left = 'L' in options['existing_edges']
+        right = 'R' in options['existing_edges']
+    else:
+        top = False
+        bot = False
+        left = False
+        right = False
     n_vertical = top + bot
     n_horizontal = left + right
     kname = f'kernel_{ki}'
@@ -263,6 +269,11 @@ def build_kernel_loop(opt,degree_prefix,varname,ki):
                 mapname=mapname,
                 value_function=value_function,
                 kname=kname,
+                tb=tb,
+                bb=bb,
+                lb=lb,
+                rb=rb,
+                kD=kD,
             )
         elif d == 1:
             # x derivative
@@ -285,6 +296,11 @@ def build_kernel_loop(opt,degree_prefix,varname,ki):
                 mapname=mapname,
                 value_function=value_function,
                 kname=kname,
+                tb=tb,
+                bb=bb,
+                lb=lb,
+                rb=rb,
+                kD=kD,
             )            
         else:
             kernel_lines = ''
