@@ -38,7 +38,7 @@ def degree_derivative_iter_max(k, v=['y','x'],sep='',sep2=''):
     # x1y1z1
     n = len(v)
     vrange = list(range(k+1))
-    combos = list(itertools.combinations_with_replacement(vrange,n))
+    combos = list(itertools.product(vrange,repeat=n))
     res = [
         sep.join(
             ['%s%s%s' % (v[i], sep2,c[i])  for i in range(len(c))]
