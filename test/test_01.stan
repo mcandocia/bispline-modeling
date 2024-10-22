@@ -54,6 +54,7 @@ transformed data {
 // and assigns the initial parameters
 // note that while a denominator is still calculated for edge segments,
 // they will not be evaluated for them
+//kernel #1 degrees y0x0 (sum=0)|dflag=1
 int<lower=1> ky_0;
 int<lower=1> kx_0;
 ky_0 = ydim %/% 7+1;;
@@ -68,14 +69,15 @@ matrix<lower=0>[ydim,xdim] kernel_dy0x0_0;
     
 
 
+//kernel #1 degrees y0x0 (sum=0)|dflag=1
 // template for squares
 for (yi in 1:ky_0){
   for (xi in 1:kx_0){
     // for each specific subkernel
     // loop over max distance in each direction
      
-    for (y in max(1, 1+(yi - 1) * 7 - 14):min(ydim,1+(yi - 1) * 7 + 14)){
-      for (x in max(1, 1+(xi - 1) * 7 - 14):min(xdim,1+(xi - 1) * 7 + 14)){
+    for (y in max(1, 1+(yi - 1) * 7 - 0.0):min(ydim,1+(yi - 1) * 7 + 0.0)){
+      for (x in max(1, 1+(xi - 1) * 7 - 0.0):min(xdim,1+(xi - 1) * 7 + 0.0)){
         // note the center is (1+(yi-1)*7,(1+(xi-1)*7)
         kernel_dy0x0_0[y,x] += (1.0-0.5 * max(abs(y-(1+yi-1)*7),abs(x-(1+(xi-1)*7))));
       }
@@ -88,6 +90,7 @@ for (yi in 1:ky_0){
 // and assigns the initial parameters
 // note that while a denominator is still calculated for edge segments,
 // they will not be evaluated for them
+//kernel #1 degrees y0x1 (sum=1)|dflag=1
 
 
 
@@ -102,6 +105,7 @@ matrix<lower=0>[ydim,xdim] kernel_dy0x1_0;
     
 
 
+//kernel #1 degrees y0x1 (sum=1)|dflag=1
 // template for squares
 // first derivative, so just do a flat count 
 for (yi in 1:ky_0){
@@ -109,8 +113,8 @@ for (yi in 1:ky_0){
     // for each specific subkernel
     // loop over max distance in each direction
      
-    for (y in max(1, 1+(yi - 1) * 7 - 14):min(ydim,1+(yi - 1) * 7 + 14)){
-      for (x in max(1, 1+(xi - 1) * 7 - 14):min(xdim,1+(xi - 1) * 7 + 14)){
+    for (y in max(1, 1+(yi - 1) * 7 - 0.0):min(ydim,1+(yi - 1) * 7 + 0.0)){
+      for (x in max(1, 1+(xi - 1) * 7 - 0.0):min(xdim,1+(xi - 1) * 7 + 0.0)){
         // note the center is (1+(yi-1)*7,(1+(xi-1)*7)
         kernel_dy0x1_0[y,x] += 1;
       }
